@@ -134,10 +134,21 @@ class ObjectStorage(storage):
     def __init__(self):
         super().__init__()
         self.handler = EventHandler
-        self.objectsList = [CCircle, square, triangle, line]   
+        self.objectsList = [CCircle, square, triangle, line]
+        self.objectDict = {
+            "C" : CCircle,
+            "S" : square,
+            "T" : triangle,
+            "L" : line,
+            "G" : Group
+    
+        }   
         self.lastPressedObj = []  
     def add(self, x, index = None):
         super().add(x,index)
+        self.handler.Invoke(self, None)
+    def clear(self):
+        super().clear()
         self.handler.Invoke(self, None)
     def select(self, node, CtrlPressed):
         if CtrlPressed:
@@ -205,10 +216,24 @@ class ObjectStorage(storage):
         self.handler.Invoke(self, None)
     def setlastPressedObj(self, X, Y):
         self.lastPressedObj = [X,Y]
+    def save(self, file):
+        file.write(str(self.len) + '\n')
+        someNode = self.head
+        for i in range(self.len):
+            someNode.key.save(file)
+            someNode = someNode.next
+        self.clear()
+    def load(self, file):
+        for i in range(int(file.readline())):
+            someObj = self.objectDict[file.readline().split()[0]]()
+            someObj.load(file)
+            self.add(someObj)
+
+
     
 
 class figure(object):
-    def __init__(self, x, y, color):
+    def __init__(self, x = 1, y = 1, color = Dr.Color.FromName("DeepSkyBlue")):
         self.xcord = x
         self.ycord = y
         self.color = color
@@ -226,8 +251,10 @@ class figure(object):
         return self.color
     def changeColor(self, color):
         self.color = color
+    def save(self, file): pass
+    def load(self, file): pass
 class CCircle(figure):
-    def __init__(self, x, y,color):
+    def __init__(self, x = 1, y = 1, color = Dr.Color.FromName("DeepSkyBlue")):
         super().__init__(x,y,color)
 
         self.rad = 15
@@ -244,8 +271,14 @@ class CCircle(figure):
         self.rad = 15 + val
     def __str__(self):
         return "Circle"
+    def save(self, file):
+        file.write("C" + "\n")
+        file.write(str(self.xcord)+" "+str(self.ycord)+" "+ str(self.rad)+ " "+self.color.Name+ "\n")
+    def load(self, file):
+        f = file.readline().split()
+        self.xcord, self.ycord, self.rad, self.color = int(f[0]), int(f[1]), int(f[2]), Dr.Color.FromName(f[3])
 class square(figure):
-    def __init__(self, x, y, color):
+    def __init__(self, x = 1, y = 1, color = Dr.Color.FromName("DeepSkyBlue")):
         super().__init__(x,y,color)
 
         self.width = 30
@@ -264,8 +297,14 @@ class square(figure):
         self.height = 30 + val
     def __str__(self):
         return "Square"   
+    def save(self, file):
+        file.write("S" + "\n")
+        file.write(str(self.xcord)+" "+str(self.ycord)+" "+ str(self.width)+" "+ str(self.height)+ " "+self.color.Name+ "\n")
+    def load(self, file):
+        f = file.readline().split()
+        self.xcord, self.ycord, self.width, self.height, self.color = int(f[0]), int(f[1]), int(f[2]), int(f[3]),  Dr.Color.FromName(f[4])
 class triangle(figure):
-    def __init__(self, x, y,color):
+    def __init__(self,x = 1, y = 1, color = Dr.Color.FromName("DeepSkyBlue")):
         super().__init__(x,y,color)
 
         self.width = 30
@@ -289,8 +328,14 @@ class triangle(figure):
         self.height = int(round(self.width*(np.sin(np.deg2rad(60)))))
     def __str__(self):
         return "Triangle"       
+    def save(self, file):
+        file.write("T" + "\n")
+        file.write(str(self.xcord)+" "+str(self.ycord)+" "+ str(self.width)+" "+ str(self.height) + " "+self.color.Name+ "\n")
+    def load(self, file):
+        f = file.readline().split()
+        self.xcord, self.ycord, self.width, self.height, self.color = int(f[0]), int(f[1]), int(f[2]), int(f[3]),  Dr.Color.FromName(f[4])
 class line(figure):
-    def __init__(self, x,y,color):
+    def __init__(self, x = 1, y = 1, color = Dr.Color.FromName("DeepSkyBlue")):
         super().__init__(x,y,color)
         self.lengh = 100
         self.x1 = self.xcord+self.lengh
@@ -309,8 +354,19 @@ class line(figure):
     def changeSize(self, val):
         self.lengh = 100 + val
         self.x1 = self.xcord+self.lengh
+    def changeCords(self, deltaX,deltaY):
+        self.xcord += deltaX
+        self.ycord += deltaY
+        self.x1 += deltaX
+        self.y1 += deltaY
     def __str__(self):
         return "Line"
+    def save(self, file):
+        file.write("L" + "\n")
+        file.write(str(self.xcord)+" "+str(self.ycord)+" "+ str(self.x1)+" "+ str(self.y1) + " "+self.color.Name+ "\n")
+    def load(self, file):
+        f = file.readline().split()
+        self.xcord, self.ycord, self.x1, self.y1, self.color = int(f[0]), int(f[1]), int(f[2]), int(f[3]),  Dr.Color.FromName(f[4])
 
 class Group(figure):
     def __init__(self, object = None):
@@ -345,6 +401,22 @@ class Group(figure):
             i.setSelect(bol)
     def __str__(self):
         return "Group"
+    def save(self, file):
+        file.write("G" + "\n")
+        file.write(str(len(self.stor)) + "\n")
+        for i in self.stor:
+            i.save(file)
+    def load(self, file):
+        for i in range(int(file.readline())):
+            objectDict = {
+                "C" : CCircle,
+                "S" : square,
+                "T" : triangle,
+                "L" : line
+            }
+            someObj = objectDict[file.readline().split()[0]](1,1,"DeepBluSky")
+            someObj.load(file)
+            self.add(someObj)
 
 
 
@@ -365,6 +437,7 @@ class form1(System.Windows.Forms.Form):
         self.ObjectStorage = ObjectStorage()
 
         self.drawPen = Dr.Pen(Dr.Brushes.DeepSkyBlue)
+        self.drawPen.Color = Dr.Color.FromName("DeepSkyBlue")
         self.drawPen.Width = 2
         
         self.InitiliazeComponent()
@@ -383,6 +456,8 @@ class form1(System.Windows.Forms.Form):
         self.SwitchColorCB = WinForm.ComboBox()
         self.SwitchColorB = WinForm.Button()
         self.GroupObjB = WinForm.Button()
+        self.SaveObjB = WinForm.Button()
+        self.LoadObjB = WinForm.Button()
 
         self.ObjectStorage.handler = EventHandler(self.drawObjects)
 
@@ -398,7 +473,7 @@ class form1(System.Windows.Forms.Form):
         self.ImagePB.MouseDown += self.ImagePB_KeyDown
         self.ImagePB.MouseUp += self.ImagePB_MouseUp
 
-        self.butt.Location = Dr.Point(1250+60,420)
+        self.butt.Location = Dr.Point(1250+60,620)
         self.butt.Size = Dr.Size(200, 50)
         self.butt.BackColor = Dr.Color.FromArgb(238,238,240)
         self.butt.Text = "Очистить"
@@ -438,6 +513,24 @@ class form1(System.Windows.Forms.Form):
         self.GroupObjB.FlatStyle = WinForm.FlatStyle.Flat
         self.GroupObjB.FlatAppearance.BorderSize = 0
         self.GroupObjB.Click += self.GroupObjB_Click
+
+        self.SaveObjB.Location = Dr.Point(1250+60,360)
+        self.SaveObjB.Size = Dr.Size(200, 50)
+        self.SaveObjB.BackColor = Dr.Color.FromArgb(238,238,240)
+        self.SaveObjB.Text = "Сохранить объекты"
+        self.SaveObjB.UseVisualStyleBackColor = 0
+        self.SaveObjB.FlatStyle = WinForm.FlatStyle.Flat
+        self.SaveObjB.FlatAppearance.BorderSize = 0
+        self.SaveObjB.Click += self.SaveObjB_Click
+
+        self.LoadObjB.Location = Dr.Point(1250+60,420)
+        self.LoadObjB.Size = Dr.Size(200, 50)
+        self.LoadObjB.BackColor = Dr.Color.FromArgb(238,238,240)
+        self.LoadObjB.Text = "Загрузить объекты"
+        self.LoadObjB.UseVisualStyleBackColor = 0
+        self.LoadObjB.FlatStyle = WinForm.FlatStyle.Flat
+        self.LoadObjB.FlatAppearance.BorderSize = 0
+        self.LoadObjB.Click += self.LoadObjB_Click
         
         self.ChangeSizeSB.Location = Dr.Point(1250,50)
         self.ChangeSizeSB.Size = Dr.Size(300,20)
@@ -456,6 +549,8 @@ class form1(System.Windows.Forms.Form):
         self.Controls.Add(self.SwitchColorCB)
         self.Controls.Add(self.SwitchColorB)
         self.Controls.Add(self.GroupObjB)
+        self.Controls.Add(self.SaveObjB)
+        self.Controls.Add(self.LoadObjB)
     def dispose(self):
         self.components.Dispose()
         WinForm.Form.Dispose(self)
@@ -503,8 +598,15 @@ class form1(System.Windows.Forms.Form):
         self.drawPen.Color = Dr.Color.FromName(self.SwitchColorCB.SelectedItem)
         self.ObjectStorage.changeColorSelected(self.drawPen.Color)
     def GroupObjB_Click(self, sender, args):
-        self.ObjectStorage.addSelectedInGroup()                
-
+        self.ObjectStorage.addSelectedInGroup()  
+    def SaveObjB_Click(self, sender, args):
+        f = open('D:\progs\Repository\lr7OOP_Respository\data.txt', 'w')
+        self.ObjectStorage.save(f)
+        f.close()
+    def LoadObjB_Click(self, sender, args):
+        f = open('D:\progs\Repository\lr7OOP_Respository\data.txt')             
+        self.ObjectStorage.load(f)
+        f.close()
         
     def butt_Click(self, sender, args):
         self.ImagePB.Image = None
