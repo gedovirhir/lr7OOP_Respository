@@ -202,7 +202,22 @@ class ObjectStorage(storage):
         self.handler.Invoke(self,None)
     def changeColorSelected(self, color):
         self.iterationOfSelectedWithFunc(self.changeColorNode, color)
-    def addSelectedInGroup(self):
+    def addSelectedInGroup(self, group):
+        self.add(group)
+        self.iterationOfSelectedWithFunc(group.addFromNode)
+        self.deleteSelected()
+        group.setSelect(True)
+        self.handler.Invoke(self, None)
+    
+    def unGroupSelected(self):
+        someNode = self.head
+        for i in range(self.len):
+            if someNode.key.selected and someNode.key.__str__() == "Group":
+                someNode.key.unGroup(self)
+                self.deleteNode(someNode)
+            someNode = someNode.next
+
+    """
         if self.head.key.__str__() != "Group":
             self.add(Group(), 0)
         if not self.head.key.selected:
@@ -214,6 +229,7 @@ class ObjectStorage(storage):
         self.deleteSelected()
         self.head.key.setSelect(True)
         self.handler.Invoke(self, None)
+    """
     def setlastPressedObj(self, X, Y):
         self.lastPressedObj = [X,Y]
     def save(self, file):
@@ -417,6 +433,10 @@ class Group(figure):
             someObj = objectDict[file.readline().split()[0]](1,1,"DeepBluSky")
             someObj.load(file)
             self.add(someObj)
+    def unGroup(self, storage):
+        for i in self.stor:
+            storage.add(i)
+        self.clear()
 
 
 
@@ -458,6 +478,7 @@ class form1(System.Windows.Forms.Form):
         self.GroupObjB = WinForm.Button()
         self.SaveObjB = WinForm.Button()
         self.LoadObjB = WinForm.Button()
+        self.UnGroupObjB = WinForm.Button()
 
         self.ObjectStorage.handler = EventHandler(self.drawObjects)
 
@@ -508,11 +529,20 @@ class form1(System.Windows.Forms.Form):
         self.GroupObjB.Location = Dr.Point(1250+60,310)
         self.GroupObjB.Size = Dr.Size(200, 50)
         self.GroupObjB.BackColor = Dr.Color.FromArgb(238,238,240)
-        self.GroupObjB.Text = "Сгруппировать/разгруппировать"
+        self.GroupObjB.Text = "Сгруппировать"
         self.GroupObjB.UseVisualStyleBackColor = 0
         self.GroupObjB.FlatStyle = WinForm.FlatStyle.Flat
         self.GroupObjB.FlatAppearance.BorderSize = 0
         self.GroupObjB.Click += self.GroupObjB_Click
+
+        self.UnGroupObjB.Location = Dr.Point(1250+60+210,310)
+        self.UnGroupObjB.Size = Dr.Size(200, 50)
+        self.UnGroupObjB.BackColor = Dr.Color.FromArgb(238,238,240)
+        self.UnGroupObjB.Text = "Разгруппировать"
+        self.UnGroupObjB.UseVisualStyleBackColor = 0
+        self.UnGroupObjB.FlatStyle = WinForm.FlatStyle.Flat
+        self.UnGroupObjB.FlatAppearance.BorderSize = 0
+        self.UnGroupObjB.Click += self.UnGroupObjB_Click
 
         self.SaveObjB.Location = Dr.Point(1250+60,360)
         self.SaveObjB.Size = Dr.Size(200, 50)
@@ -551,6 +581,7 @@ class form1(System.Windows.Forms.Form):
         self.Controls.Add(self.GroupObjB)
         self.Controls.Add(self.SaveObjB)
         self.Controls.Add(self.LoadObjB)
+        self.Controls.Add(self.UnGroupObjB)
     def dispose(self):
         self.components.Dispose()
         WinForm.Form.Dispose(self)
@@ -598,7 +629,9 @@ class form1(System.Windows.Forms.Form):
         self.drawPen.Color = Dr.Color.FromName(self.SwitchColorCB.SelectedItem)
         self.ObjectStorage.changeColorSelected(self.drawPen.Color)
     def GroupObjB_Click(self, sender, args):
-        self.ObjectStorage.addSelectedInGroup()  
+        self.ObjectStorage.addSelectedInGroup(Group())  
+    def UnGroupObjB_Click(self, sender, args):
+        self.ObjectStorage.unGroupSelected()
     def SaveObjB_Click(self, sender, args):
         f = open('D:\progs\Repository\lr7OOP_Respository\data.txt', 'w')
         self.ObjectStorage.save(f)

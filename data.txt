@@ -1,7 +1,13 @@
-3
+2
+G
+2
+G
+2
 T
-915 187 30 26 DeepSkyBlue
+565 155 30 26 DeepSkyBlue
 T
-892 303 30 26 DeepSkyBlue
+537 247 30 26 DeepSkyBlue
 T
-880 454 30 26 DeepSkyBlue
+757 336 30 26 DeepSkyBlue
+T
+857 418 30 26 DeepSkyBlue
